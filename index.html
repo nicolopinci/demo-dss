@@ -77,13 +77,18 @@ body{display:flex;flex-direction:column}
 .light .model-bar [data-mode="ready"]{color:#287339}
 .light .model-bar [data-mode="error"]{color:#a51b3e}
 @media(max-width:650px){.model-bar{padding:0 14px 8px;font-size:10px;gap:6px}.model-bar button{font-size:10px}.model-bar progress{width:90px}}
+
+.language-controls{display:flex;align-items:center;gap:10px;padding:0 4px 4px;color:var(--muted);font-size:12px}
+.language-controls select{max-width:180px;min-width:120px;padding:4px 9px;border:1px solid var(--line);border-radius:7px;color:var(--text);background:var(--panel);font-size:12px}
+.language-info{padding:0 4px 5px;font-size:11px;color:var(--muted);line-height:1.4}
+@media(max-width:650px){.language-controls{font-size:11px;gap:8px}.language-controls select{font-size:11px}.language-info{font-size:10px}}
 </style></head>
 <body>
 <header class="masthead">
 <div class="banner">DEMO for ENLIT 2026</div>
 <section class="disclaimer" aria-label="Simulation disclaimer">
  <strong>SIMULATION ONLY · STORED BENCHMARK ANSWERS</strong>
- <p>This page simulates the GURU interaction. A multilingual neural model selects a benchmark question and its stored answer.
+ <p>This page simulates the GURU interaction. A multilingual neural model selects a benchmark question and its stored answer in your question’s language.
  Answers are not generated. No live energy analysis or device control runs here; this demo does not validate the full GURU system.</p>
 </section></header>
 <noscript><div class="noscript">JavaScript is required to run this benchmark-matching simulation.</div></noscript>
@@ -129,6 +134,11 @@ body{display:flex;flex-direction:column}
    </article>
   </section>
   <div class="composer-area">
+   <div class="language-controls">
+    <label for="questionLanguage">Question language</label>
+    <select id="questionLanguage" aria-describedby="languageInfo"><option value="auto">Auto-detect</option></select>
+   </div>
+   <div class="language-info" id="languageInfo" aria-live="polite">Auto-detect · answers stay in your question’s language</div>
    <div class="status" id="status" role="status" aria-live="polite"></div>
    <form class="composer" id="questionForm">
     <textarea id="question" aria-label="Your question" rows="2" maxlength="4000" placeholder="Type your message here…" autofocus></textarea>
@@ -145,14 +155,16 @@ body{display:flex;flex-direction:column}
  <div class="dialog-head"><h2 id="readmeTitle">GURU · ENLIT 2026</h2><span class="grow"></span><button class="icon" data-close="readmeDialog" aria-label="Close Readme">✕</button></div>
  <div class="readme-disclaimer"><strong>Simulation only — not the live GURU system.</strong>
  <p>This page demonstrates the intended interaction using a real multilingual neural retrieval model and pre-existing benchmark question–answer pairs. It does not generate answers, run the full GURU orchestration system, perform live energy analysis, operate devices, or validate the full system’s capabilities.</p></div>
- <ol><li>Type a question and press Enter or the pink arrow.</li><li>A multilingual MiniLM model embeds your question locally and compares it with all distinct benchmark questions using cosine similarity. The selected question replaces your input.</li><li>The selected question’s stored answer is displayed verbatim. Check the replacement: a semantic match may still change the meaning of your original question.</li></ol>
- <p>Answers may be inaccurate, outdated, or inappropriate for your circumstances. They are reproduced without verification and should not be relied on as authoritative advice. The model can compare questions across languages, but it does not translate answers or fact-check them. Exact-equivalent questions are matched directly; duplicate questions use their first row. Other queries select the highest cosine similarity without a minimum threshold. If an explicit climate-zone letter is recognized and that zone exists in the benchmark, candidates are restricted to the same zone. Similarity is not a probability of correctness.</p>
+ <ol><li>Type a question and press Enter or the pink arrow.</li><li>A multilingual MiniLM model embeds your question locally and compares it with benchmark questions in the detected or selected language using cosine similarity. The selected question replaces your input.</li><li>The selected question’s stored answer is displayed verbatim. Check the replacement: a semantic match may still change the meaning of your original question.</li></ol>
+ <p>Answers may be inaccurate, outdated, or inappropriate for your circumstances. They are reproduced without verification and should not be relied on as authoritative advice. The model is multilingual, but retrieval is restricted to your question’s language. Stored answers are not translated or fact-checked. Exact-equivalent questions are matched directly within the selected language; duplicates use their first row in that language. Other queries select the highest cosine similarity without a minimum threshold. If an explicit climate-zone letter is recognized and that zone exists in the benchmark, candidates must also match that zone. If none exist in the requested language, the page reports that no eligible answer is available. Similarity is not a probability of correctness.</p>
  <p>Use <strong>Example questions</strong> to browse the active dataset. Enter sends; Shift+Enter adds a new line. Your chat history lasts only for this tab session and is cleared on reload.</p>
  <p id="datasetInfo"></p>
  <p><strong>Primary data source:</strong> <a href="./jouleqa_benchmark.csv" target="_blank" rel="noopener noreferrer">JouleQA CSV in this repository ↗</a></p>
  <p id="sourceDetail"></p>
  <p>If the repository CSV is missing, invalid, or blocked when opening this HTML directly from your computer, the page uses a labelled copy of the original user-uploaded benchmark. This fallback has not been verified against the repository CSV. The active source is shown above the chat and beside each answer.</p>
  <p>All model inference and matching run in a Web Worker in your browser using the CPU (WebAssembly). Questions are not sent to an inference service. The page and CSV load from your site, the JavaScript library/runtime from jsDelivr, and the model from Hugging Face and its download hosts. These hosts receive normal asset-download requests. There is no analytics code.</p>
+ <p><strong>Answer language:</strong> Auto-detect uses the local <a href="https://github.com/nitotm/efficient-language-detector-js" target="_blank" rel="noopener noreferrer">ELD 2.1.0</a> language detector, loaded from jsDelivr. Both exact and semantic searches are restricted by the CSV’s <code>Language</code> column before ranking. This relies on the benchmark language labels being correct. No answer from another language is silently substituted.</p>
+ <p>For short, mixed-language, or ambiguous input, select the question language explicitly. The selector overrides automatic detection. If the detected language has no benchmark entries, the demo displays a notice and no answer. Serbian in Latin script may require manual selection. Choosing an example sets its language; a new chat returns to Auto-detect.</p>
  <p><strong>Model:</strong> <a href="https://huggingface.co/Xenova/paraphrase-multilingual-MiniLM-L12-v2" target="_blank" rel="noopener noreferrer">paraphrase-multilingual-MiniLM-L12-v2</a>, an 8-bit quantized ONNX model, with <a href="https://huggingface.co/docs/transformers.js/v3.8.1/index" target="_blank" rel="noopener noreferrer">Transformers.js 3.8.1</a>. It produces normalized 384-dimensional embeddings using mean pooling and up to 128 tokens per question. Retrieval is semantic cosine similarity, not the previous weighted keyword score.</p>
  <p><strong>First visit:</strong> the model download is about 118 MB, plus tokenizer and runtime files. Encoding the benchmark may take a few minutes on CPU; progress is shown above the chat. The interface remains responsive. If loading fails, semantic search is disabled until you retry; it does not silently switch to keyword matching.</p>
  <p><strong>Local cache:</strong> model assets may be cached by the browser. Benchmark embeddings are cached in IndexedDB using a fingerprint of the model configuration and complete ordered question list. Changing questions causes re-encoding; changing only answers reuses embeddings with the new answers. User questions and conversation history are not saved in this cache. Clearing the site’s browser data removes its caches.</p>
@@ -327,6 +339,80 @@ function normalize(text) {
 function climateZone(text) {
   return normalize(text).match(/\b(?:climate zone|climatic zone|zona climatica|zona|zone|klimazone) ([a-f])\b/)?.[1] || null;
 }
+// ELD identifies language locally. Detection considers all supported languages,
+// so an unsupported language is not forced into one of the benchmark languages.
+const LANGUAGE_DETECTOR_URL = 'https://cdn.jsdelivr.net/npm/eld@2.1.0/src/entries/static.medium.js';
+const DETECTOR_CODES = 'am ar az be bg bn ca cs da de el en es et eu fa fi fr gu he hi hr hu hy is it ja ka kn ko ku lo lt lv ml mr ms nl no or pa pl pt ro ru sk sl sq sr sv ta te th tl tr uk ur vi yo zh'.split(' ');
+const DISPLAY_LANGUAGES = new Intl.DisplayNames(['en'], { type: 'language' });
+const LANGUAGE_ALIASES = new Map();
+for (const code of DETECTOR_CODES) {
+  LANGUAGE_ALIASES.set(code, code);
+  LANGUAGE_ALIASES.set(DISPLAY_LANGUAGES.of(code).toLowerCase(), code);
+}
+for (const [alias, code] of Object.entries({ eng:'en', ita:'it', deu:'de', ger:'de', ell:'el', gre:'el', srp:'sr', est:'et', spa:'es', ron:'ro', rum:'ro' })) LANGUAGE_ALIASES.set(alias, code);
+function languageCode(label) { return LANGUAGE_ALIASES.get(String(label).trim().toLowerCase()) || null; }
+function languageName(code) { return DISPLAY_LANGUAGES.of(code) || code; }
+class QuestionLanguageError extends Error {
+  constructor(message, code = null) { super(message); this.name = 'QuestionLanguageError'; this.languageCode = code; }
+}
+class QuestionLanguage {
+  constructor(rows) {
+    this.available = new Set(); this.exactLanguages = new Map(); this.detector = null; this.loadPromise = null;
+    for (const row of rows) {
+      const code = languageCode(row.language);
+      if (!code) throw Error('Unrecognized benchmark Language value: ' + row.language);
+      this.available.add(code);
+      const key = normalize(row.question);
+      if (!this.exactLanguages.has(key)) this.exactLanguages.set(key, new Set());
+      this.exactLanguages.get(key).add(code);
+    }
+  }
+  async load() {
+    if (this.detector) return this.detector;
+    if (!this.loadPromise) this.loadPromise = (async () => {
+      let timer;
+      try {
+        const module = await Promise.race([
+          import(LANGUAGE_DETECTOR_URL),
+          new Promise((_, reject) => { timer = setTimeout(() => reject(Error('Language detection download timed out.')), 15000); })
+        ]);
+        this.detector = module.eld.newInstance();
+        return this.detector;
+      } finally { clearTimeout(timer); }
+    })();
+    return this.loadPromise;
+  }
+  async resolve(query, selected = 'auto') {
+    if (selected !== 'auto') {
+      if (!this.available.has(selected)) throw new QuestionLanguageError('No benchmark answers are available in the selected language.', selected);
+      return { code: selected, name: languageName(selected), method: 'selected' };
+    }
+    const exact = this.exactLanguages.get(normalize(query));
+    // Exact, unambiguous benchmark text already has a language label. If identical
+    // text is labelled in multiple languages, use the detector to disambiguate it.
+    if (exact?.size === 1) {
+      const code = [...exact][0]; return { code, name: languageName(code), method: 'benchmark' };
+    }
+    let detector;
+    try { detector = await this.load(); }
+    catch (_) { throw new QuestionLanguageError('Automatic language detection is unavailable. Select your question language and send again.'); }
+    const detected = detector.detect(query);
+    if (!detected.language || !detected.isReliable()) {
+      throw new QuestionLanguageError('The question is too short or its language is unclear. Select the question language, or write a longer question.');
+    }
+    const code = detected.language;
+    if (!this.available.has(code)) {
+      // ELD's Serbian model covers Cyrillic; Latin-script Serbian may be classified
+      // as Croatian. Ask rather than silently treating the two as the same language.
+      if (code === 'hr' && this.available.has('sr')) {
+        throw new QuestionLanguageError('This may be Croatian or Serbian in Latin script. If your question is Serbian, select Serbian and send again.');
+      }
+      throw new QuestionLanguageError(languageName(code) + ' was detected, but this benchmark has no answers in that language. No answer in another language has been substituted.', code);
+    }
+    return { code, name: languageName(code), method: 'detected' };
+  }
+}
+
 class SemanticRetriever {
   constructor(rows, onProgress) {
     this.rows = rows; this.onProgress = onProgress; this.serial = 0; this.pending = new Map(); this.disposed = false;
@@ -338,6 +424,16 @@ class SemanticRetriever {
       const key = normalize(row.question); if (!this.normalized.has(key)) this.normalized.set(key, i);
     });
     this.zones = this.uniqueQuestions.map(climateZone);
+    this.questionLanguage = new QuestionLanguage(rows);
+    this.rowLanguageCodes = rows.map(row => languageCode(row.language));
+    const embeddingIndices = new Map(this.uniqueQuestions.map((q, i) => [q, i]));
+    this.rowEmbeddingIndices = rows.map(row => embeddingIndices.get(row.question));
+    this.rowsByLanguage = new Map();
+    rows.forEach((row, i) => {
+      const code = this.rowLanguageCodes[i];
+      if (!this.rowsByLanguage.has(code)) this.rowsByLanguage.set(code, []);
+      this.rowsByLanguage.get(code).push(i);
+    });
     const source = $('semanticWorker').textContent;
     this.workerURL = URL.createObjectURL(new Blob([source], { type: 'text/javascript' }));
     this.worker = new Worker(this.workerURL, { type: 'module', name: 'guru-semantic-retrieval' });
@@ -361,23 +457,47 @@ class SemanticRetriever {
     });
   }
   async initialize() {
-    try { this.info = await this.request('init', { questions: this.uniqueQuestions, config: MODEL_CONFIG }); return this; }
+    try {
+      const [info] = await Promise.all([
+        this.request('init', { questions: this.uniqueQuestions, config: MODEL_CONFIG }),
+        this.questionLanguage.load().catch(() => null)
+      ]);
+      this.info = info; return this;
+    }
     catch (error) { this.dispose(); throw error; }
   }
-  async match(query) {
+  async match(query, selectedLanguage = 'auto') {
     if (typeof query !== 'string' || !normalize(query)) throw Error('Please enter a question containing letters or numbers.');
     if (query.length > 4000) throw Error('Please keep the question below 4,000 characters.');
-    const exact = this.exact.get(query.trim()) ?? this.normalized.get(normalize(query));
-    if (exact !== undefined) return { ...this.rows[exact], matchMethod: 'Exact question match', similarity: 1 };
-    // Semantic embeddings can overlook single-letter entities. Preserve an
-    // explicitly requested climate zone when the benchmark contains that zone.
+    const language = await this.questionLanguage.resolve(query, selectedLanguage);
+    const eligibleRows = this.rowsByLanguage.get(language.code) || [];
+    // Apply the language constraint before both exact lookup and neural retrieval.
+    const key = normalize(query);
+    const exact = eligibleRows.find(i => this.rows[i].question === query.trim())
+      ?? eligibleRows.find(i => normalize(this.rows[i].question) === key);
+    const metadata = { queryLanguage: language.code, languageName: language.name, languageMethod: language.method };
+    if (exact !== undefined) return { ...this.rows[exact], ...metadata, matchMethod: 'Exact question match', similarity: 1 };
     const zone = climateZone(query);
-    const matchingZones = zone ? this.zones.map((z, i) => z === zone ? i : -1).filter(i => i >= 0) : [];
-    const result = await this.request('match', { question: query, allowedIndices: matchingZones.length ? matchingZones : null });
-    if (!Number.isInteger(result.index) || result.index < 0 || result.index >= this.rowIndices.length || !Number.isFinite(result.score)) {
-      throw Error('The semantic search returned an invalid result.');
+    const zoneExists = zone && this.zones.includes(zone);
+    const candidateRows = zoneExists
+      ? eligibleRows.filter(i => this.zones[this.rowEmbeddingIndices[i]] === zone)
+      : eligibleRows;
+    if (!candidateRows.length) {
+      throw new QuestionLanguageError('No ' + language.name + ' benchmark question is available' + (zone ? ' for climate zone ' + zone.toUpperCase() : '') + '. No answer in another language has been substituted.', language.code);
     }
-    return { ...this.rows[this.rowIndices[result.index]], matchMethod: 'Semantic match · MiniLM', similarity: result.score };
+    // Several CSV rows may share question text but have answers in different
+    // languages. Share its vector, then recover the row from the chosen language.
+    const embeddingToRow = new Map();
+    for (const i of candidateRows) {
+      const embedding = this.rowEmbeddingIndices[i];
+      if (!embeddingToRow.has(embedding)) embeddingToRow.set(embedding, i);
+    }
+    const result = await this.request('match', { question: query, allowedIndices: [...embeddingToRow.keys()] });
+    const rowIndex = embeddingToRow.get(result.index);
+    if (rowIndex === undefined || !Number.isFinite(result.score) || this.rowLanguageCodes[rowIndex] !== language.code) {
+      throw Error('The semantic search returned a result outside the requested language.');
+    }
+    return { ...this.rows[rowIndex], ...metadata, matchMethod: 'Semantic match · MiniLM', similarity: result.score };
   }
   dispose(message = 'Semantic search was restarted.') {
     if (this.disposed) return; this.disposed = true;
@@ -432,6 +552,7 @@ function resizeInput() {
   question.style.height = 'auto'; question.style.height = Math.min(165, Math.max(48, question.scrollHeight)) + 'px';
   $('send').disabled = busy || loading || !retriever || !question.value.trim();
   $('openExamples').disabled = loading || !retriever;
+  $('questionLanguage').disabled = busy;
 }
 function cancelPending() { requestId++; busy = false; question.readOnly = false; question.removeAttribute('aria-busy'); resizeInput(); }
 function renderHistory() {
@@ -448,30 +569,45 @@ function showResult(item) {
   $('stage').classList.add('answered'); $('welcome').hidden = true; $('conversation').hidden = false;
   $('questionBubble').textContent = item.question; $('answer').textContent = item.answer;
   $('source').textContent = ['Stored answer', item.id, item.language, item.region, item.dataSource, item.matchMethod].join(' · ');
+  $('questionBubble').lang = item.queryLanguage || languageCode(item.language) || '';
+  $('answer').lang = item.queryLanguage || languageCode(item.language) || '';
+  $('languageInfo').textContent = (item.languageName || item.language) + ' · question and answer limited to this language';
   $('conversation').scrollTop = 0; renderHistory();
 }
 function newChat() {
-  cancelPending(); current = null; question.value = ''; $('stage').classList.remove('answered');
+  cancelPending(); current = null; question.value = ''; $('questionLanguage').value = 'auto'; updateLanguageHint(); $('stage').classList.remove('answered');
   $('welcome').hidden = false; $('conversation').hidden = true; $('answer').textContent = ''; setStatus('');
   renderHistory(); resizeInput(); question.focus(); if (window.innerWidth <= 650) layout.classList.add('collapsed');
 }
 $('questionForm').addEventListener('submit', async event => {
   event.preventDefault(); const text = question.value.trim(); if (!text || busy || loading || !retriever) return;
-  const engine = retriever, activeSource = sourceLabel;
+  const engine = retriever, activeSource = sourceLabel, selectedLanguage = $('questionLanguage').value;
   const id = ++requestId; busy = true; question.readOnly = true; question.setAttribute('aria-busy', 'true');
   resizeInput(); setStatus('Finding the nearest question with the multilingual model…');
   // Let the browser paint the status; no simulated reasoning or artificial delay.
   await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
   if (id !== requestId) return;
   try {
-    const result = { ...await engine.match(text), dataSource: activeSource };
+    const result = { ...await engine.match(text, selectedLanguage), dataSource: activeSource };
     if (id !== requestId) return;
     history.push(result); if (history.length > 60) history.shift(); showResult(result);
     setStatus('Question replaced with the selected benchmark match. The answer is reproduced unchanged.');
-  } catch (error) { if (id === requestId) { setStatus(error.message, true); if (engine.disposed) { retriever = null; showModelError(error); } } }
+  } catch (error) {
+    if (id === requestId) {
+      if (error.name === 'QuestionLanguageError') {
+        // Never leave a previous answer visible as if it answered this query.
+        current = null; $('conversation').hidden = true; $('welcome').hidden = false;
+        $('stage').classList.remove('answered'); $('answer').textContent = ''; renderHistory();
+        $('languageInfo').textContent = error.languageCode ? languageName(error.languageCode) + ' · no eligible answer' : 'Select your question language to continue.';
+        $('questionLanguage').focus();
+      }
+      setStatus(error.message, true);
+      if (engine.disposed) { retriever = null; showModelError(error); }
+    }
+  }
   finally { if (id === requestId) { busy = false; question.readOnly = false; question.removeAttribute('aria-busy'); resizeInput(); } }
 });
-question.addEventListener('input', () => { setStatus(''); resizeInput(); });
+question.addEventListener('input', () => { setStatus(''); updateLanguageHint(); resizeInput(); });
 question.addEventListener('keydown', event => {
   if (event.key === 'Enter' && !event.shiftKey && !event.isComposing) { event.preventDefault(); $('questionForm').requestSubmit(); }
 });
@@ -500,7 +636,7 @@ function renderExamples() {
   for (const item of matches.slice(0, 80)) {
     const button = document.createElement('button'); button.className = 'example-question'; button.textContent = item.question;
     const meta = document.createElement('small'); meta.textContent = item.language + ' · ' + item.region; button.append(meta);
-    button.onclick = () => { cancelPending(); question.value = item.question; resizeInput(); $('examplesDialog').close(); question.focus(); setStatus('Press Enter to show the stored answer.'); };
+    button.onclick = () => { cancelPending(); $('questionLanguage').value = languageCode(item.language) || 'auto'; updateLanguageHint(); question.value = item.question; resizeInput(); $('examplesDialog').close(); question.focus(); setStatus('Press Enter to show the stored answer.'); };
     $('exampleList').append(button);
   }
   if (!matches.length || matches.length > 80) {
@@ -512,6 +648,14 @@ function renderExamples() {
 $('openExamples').onclick = () => { renderExamples(); $('examplesDialog').showModal(); $('exampleSearch').focus(); };
 $('exampleSearch').oninput = renderExamples; $('exampleLanguage').onchange = renderExamples;
 
+
+function updateLanguageHint() {
+  const code = $('questionLanguage').value;
+  $('languageInfo').textContent = code === 'auto'
+    ? 'Auto-detect · answers stay in your question’s language'
+    : languageName(code) + ' · answers restricted to this language';
+}
+$('questionLanguage').onchange = () => { cancelPending(); setStatus(''); updateLanguageHint(); };
 
 function modelProgress(event) {
   $('modelState').textContent = event.text; $('modelState').dataset.mode = 'loading';
@@ -550,6 +694,14 @@ async function loadBenchmark() {
   try {
     examples = rows;
     const languages = [...new Set(rows.map(r => r.language))].sort();
+    const previousQuestionLanguage = $('questionLanguage').value;
+    $('questionLanguage').replaceChildren(new Option('Auto-detect', 'auto'));
+    for (const label of languages) {
+      const code = languageCode(label);
+      if (code) $('questionLanguage').append(new Option(languageName(code), code));
+    }
+    $('questionLanguage').value = [...$('questionLanguage').options].some(o => o.value === previousQuestionLanguage) ? previousQuestionLanguage : 'auto';
+    updateLanguageHint();
     const previousLanguage = $('exampleLanguage').value;
     $('exampleLanguage').replaceChildren(new Option('All languages', ''));
     languages.forEach(language => $('exampleLanguage').append(new Option(language, language)));
